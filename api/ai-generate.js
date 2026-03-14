@@ -29,7 +29,7 @@ Given an event title or topic, generate compelling, concise conference details.
 Always return ONLY a valid JSON object with these exact fields (no markdown, no code fences, no extra text):
 {
   "fullTitle": "Full descriptive conference name (e.g. International Conference on …)",
-  "description": "2-3 paragraph professional conference description covering topics, audience, and value (plain text, no HTML, max 600 chars)",
+  "description": "3-4 paragraph professional conference description covering topics, audience, and value (plain text, no HTML, max 1200 chars)",
   "location": "Suggested host city and country (e.g. Dubai, UAE)",
   "schedule": "Suggested month and year (e.g. Sep 2026)",
   "days": "Suggested duration as a number (e.g. 3)"
@@ -44,7 +44,7 @@ Always return ONLY a valid JSON object with these exact fields (no markdown, no 
                 body: JSON.stringify({
                     system_instruction: { parts: [{ text: systemPrompt }] },
                     contents: [{ role: 'user', parts: [{ text: `Conference title / topic: ${prompt}` }] }],
-                    generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 600 }
+                    generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 1200 }
                 })
             }
         );
@@ -68,7 +68,7 @@ Always return ONLY a valid JSON object with these exact fields (no markdown, no 
 
         return res.status(200).json({
             fullTitle: String(parsed.fullTitle || '').slice(0, 200).trim(),
-            description: String(parsed.description || '').slice(0, 600).trim(),
+            description: String(parsed.description || '').slice(0, 1500).trim(),
             location: String(parsed.location || '').slice(0, 100).trim(),
             schedule: String(parsed.schedule || '').slice(0, 100).trim(),
             days: String(parsed.days || '').slice(0, 10).trim()
