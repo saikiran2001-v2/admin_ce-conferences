@@ -764,13 +764,18 @@ const $ = id => document.getElementById(id);
 const qs = (sel, ctx = document) => ctx.querySelector(sel);
 const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
-// Wipe any legacy persisted token — auth is now memory-only
-sessionStorage.removeItem('ce-admin-token');
-localStorage.removeItem('ce-admin-token');
+// Restore session only if the idle expiry hasn't passed
+localStorage.removeItem('ce-admin-token'); // wipe any legacy localStorage token
+const _savedToken  = sessionStorage.getItem('ce-admin-token');
+const _savedExpiry = parseInt(sessionStorage.getItem('ce-admin-expiry') || '0', 10);
+if (_savedToken && Date.now() >= _savedExpiry) {
+    sessionStorage.removeItem('ce-admin-token');
+    sessionStorage.removeItem('ce-admin-expiry');
+}
 
 // ── State ────────────────────────────────────────────────────────
 const state = {
-    token: null,   // never persisted — refresh or close always requires re-login
+    token: (_savedToken && Date.now() < _savedExpiry) ? _savedToken : null, // survives refresh; clears after idle
     events: [],
     speakers: [],
     bookings: [],
@@ -858,15 +863,18 @@ function showApp() {
 
 function logout() {
     state.token = null;
+    sessionStorage.removeItem('ce-admin-token');
+    sessionStorage.removeItem('ce-admin-expiry');
     clearIdleTimer();
     showLogin();
 }
 
-// ── Idle timeout (30 min) ────────────────────────────────────────
-const IDLE_MS = 30 * 60 * 1000;
+// ── Idle timeout (5 min) ────────────────────────────────────────
+const IDLE_MS = 5 * 60 * 1000;
 let _idleTimer = null;
 function resetIdleTimer() {
     clearIdleTimer();
+    sessionStorage.setItem('ce-admin-expiry', String(Date.now() + IDLE_MS));
     _idleTimer = setTimeout(() => {
         toast('Session expired due to inactivity.', 'error');
         logout();
@@ -1698,7 +1706,8 @@ $('login-form').addEventListener('submit', async e => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Login failed');
         state.token = data.token;
-        state.token = data.token;
+        sessionStorage.setItem('ce-admin-token', data.token);
+        sessionStorage.setItem('ce-admin-expiry', String(Date.now() + IDLE_MS));
         showApp();
         await loadData();
     } catch (ex) {
