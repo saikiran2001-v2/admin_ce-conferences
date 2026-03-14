@@ -108,6 +108,10 @@
         .field select option { background: #1e1840; }
         .img-upload-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:.5rem; }
         .img-upload-preview { max-width:180px; max-height:100px; object-fit:cover; border-radius:8px; border:2px solid var(--border-b); display:block; margin-top:.5rem; }
+        .gallery-list { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.4rem; }
+        .gallery-item { position:relative; display:inline-flex; }
+        .gallery-item .img-upload-preview { width:90px; height:65px; object-fit:cover; }
+        .gallery-item .del-gallery-btn { position:absolute; top:2px; right:2px; padding:2px 5px; font-size:.7rem; border-radius:4px; }
 
         .btn {
             display: inline-flex;
@@ -1283,8 +1287,12 @@ function openEventForm(ev = null) {
             <input id="f-location" type="text" placeholder="Dubai, UAE" value="${esc(ev?.location || '')}">
         </div>
         <div class="field">
-            <label>Schedule</label>
+            <label>Schedule <span style="color:var(--text-m);font-weight:400">(display text, e.g. Aug 2027)</span></label>
             <input id="f-schedule" type="text" placeholder="Aug 2027" value="${esc(ev?.schedule || '')}">
+        </div>
+        <div class="field">
+            <label>Exact Start Date</label>
+            <input id="f-start-date" type="date" value="${esc(ev?.startDate || '')}">
         </div>
         <div class="field">
             <label>Duration (days)</label>
@@ -1298,6 +1306,20 @@ function openEventForm(ev = null) {
                 <input type="file" id="f-image-file" accept="image/*" style="display:none">
             </div>
             ${ev?.image ? `<img id="f-image-preview" src="${esc(ev.image)}" alt="Preview" class="img-upload-preview">` : '<img id="f-image-preview" alt="Preview" class="img-upload-preview" style="display:none">'}
+        </div>
+        <div class="field">
+            <label>Gallery Images <span style="color:var(--text-m);font-weight:400">(additional images)</span></label>
+            <div id="gallery-list" class="gallery-list">
+                ${(ev?.gallery || []).map((url, idx) => `
+                <div class="gallery-item" data-idx="${idx}">
+                    <img src="${esc(url)}" onerror="this.style.display='none'" class="img-upload-preview" style="margin:0">
+                    <button type="button" class="btn btn-danger btn-sm del-gallery-btn"><i class="fas fa-times"></i></button>
+                </div>`).join('')}
+            </div>
+            <div class="img-upload-row" style="margin-top:.5rem">
+                <button type="button" class="btn btn-secondary btn-sm" id="f-gallery-upload-btn"><i class="fas fa-images"></i> Add Image</button>
+                <input type="file" id="f-gallery-file" accept="image/*" style="display:none">
+            </div>
         </div>
         <div class="field">
             <label>Description</label>
@@ -1375,6 +1397,29 @@ function openEventForm(ev = null) {
         if (this.value) { p.src = this.value; p.style.display = 'block'; }
         else { p.style.display = 'none'; }
     });
+
+    // Gallery images
+    function setupGalleryDeleteListeners() {
+        qsa('.del-gallery-btn', $('gallery-list')).forEach(btn => {
+            btn.onclick = () => btn.closest('.gallery-item').remove();
+        });
+    }
+    $('f-gallery-upload-btn')?.addEventListener('click', () => $('f-gallery-file').click());
+    $('f-gallery-file')?.addEventListener('change', function() {
+        const file = this.files[0]; if (!file) return;
+        compressImage(file, 1200, 0.82, dataUrl => {
+            const list = $('gallery-list');
+            const idx = list.querySelectorAll('.gallery-item').length;
+            const div = document.createElement('div');
+            div.className = 'gallery-item';
+            div.dataset.idx = idx;
+            div.innerHTML = `<img src="${dataUrl}" class="img-upload-preview" style="margin:0"><button type="button" class="btn btn-danger btn-sm del-gallery-btn"><i class="fas fa-times"></i></button>`;
+            list.appendChild(div);
+            setupGalleryDeleteListeners();
+        });
+        this.value = '';
+    });
+    setupGalleryDeleteListeners();
 }
 
 function renderTicketRow(t, i) {
@@ -1430,13 +1475,19 @@ function collectEventForm() {
 
     const speakerIds = qsa('#spk-checklist input[type="checkbox"]:checked').map(cb => cb.value);
 
+    const gallery = qsa('.gallery-item img', $('gallery-list'))
+        .map(img => img.src)
+        .filter(Boolean);
+
     return {
         title: $('f-title').value.trim(),
         fullTitle: $('f-full-title').value.trim(),
         location: $('f-location').value.trim(),
         schedule: $('f-schedule').value.trim(),
+        startDate: $('f-start-date')?.value.trim() || '',
         days: $('f-days').value.trim(),
         image: $('f-image').value.trim(),
+        gallery,
         description: $('f-description').value.trim(),
         maxBookings: parseInt($('f-max').value, 10) || 250,
         status: $('f-status').value,

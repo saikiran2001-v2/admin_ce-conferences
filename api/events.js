@@ -24,13 +24,18 @@ function sanitizeTickets(tickets) {
 }
 
 function sanitizeEvent(body) {
+    const gallery = Array.isArray(body.gallery)
+        ? body.gallery.map(u => String(u).slice(0, 2000000).trim()).filter(Boolean).slice(0, 10)
+        : [];
     return {
         title: String(body.title || '').slice(0, 100).trim(),
         fullTitle: String(body.fullTitle || body.title || '').slice(0, 200).trim(),
         location: String(body.location || '').slice(0, 100).trim(),
         schedule: String(body.schedule || '').slice(0, 100).trim(),
+        startDate: String(body.startDate || '').slice(0, 20).trim(),
         days: String(body.days || '').slice(0, 20).trim(),
         image: String(body.image || '').slice(0, 2000000).trim(),
+        gallery,
         description: String(body.description || '').slice(0, 2000).trim(),
         speakerIds: Array.isArray(body.speakerIds) ? body.speakerIds.map(String) : [],
         tickets: sanitizeTickets(body.tickets),
