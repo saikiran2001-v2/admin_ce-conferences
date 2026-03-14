@@ -1,0 +1,10 @@
+{
+  "name": "admin-ceconferences",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Admin portal for CE-Conferences — manage events, speakers, and ticket tiers",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0"
+  }
+}

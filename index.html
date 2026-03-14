@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CE-Conferences Admin</title>
+    <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #120e28;
+            --bg2: #1a1436;
+            --surface: rgba(255,255,255,0.05);
+            --surface-h: rgba(255,255,255,0.09);
+            --border: rgba(255,255,255,0.10);
+            --border-b: rgba(255,255,255,0.16);
+            --text: #e8e0f5;
+            --text-m: #9d8fc2;
+            --text-d: #5e5280;
+            --accent: #b16cff;
+            --accent-alt: #ff6cb0;
+            --grad: linear-gradient(135deg, #b16cff, #ff6cb0);
+            --danger: #ff4d6d;
+            --success: #3ddc84;
+            --warn: #ffb347;
+            --sidebar-w: 230px;
+            --panel-w: 500px;
+            --radius: 14px;
+            --radius-sm: 9px;
+            --shadow: 0 8px 32px rgba(0,0,0,.45);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Login ─────────────────────────────────────────────── */
+        #login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(177,108,255,.18) 0%, transparent 70%),
+                        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255,108,176,.12) 0%, transparent 60%),
+                        var(--bg);
+        }
+
+        .login-card {
+            background: var(--surface);
+            border: 1px solid var(--border-b);
+            border-radius: calc(var(--radius) + 4px);
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 380px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .6rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .login-logo img { width: 38px; border-radius: 8px; }
+        .login-logo span { font-size: 1.25rem; font-weight: 700; }
+        .login-logo .acc { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .login-card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: .4rem; }
+        .login-card p { color: var(--text-m); font-size: .9rem; margin-bottom: 1.8rem; }
+
+        .field { margin-bottom: 1rem; text-align: left; }
+        .field label { display: block; font-size: .82rem; color: var(--text-m); margin-bottom: .4rem; font-weight: 500; }
+
+        .field input, .field select, .field textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-b);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: inherit;
+            font-size: .95rem;
+            padding: .65rem .85rem;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .field input:focus, .field select:focus, .field textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(177,108,255,.15);
+        }
+
+        .field input[type="password"] { letter-spacing: .1em; }
+        .field textarea { resize: vertical; min-height: 90px; }
+        .field select option { background: #1e1840; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .65rem 1.25rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .92rem;
+            font-weight: 600;
+            transition: opacity .18s, transform .15s;
+            text-decoration: none;
+        }
+
+        .btn:active { transform: scale(.97); }
+        .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+        .btn-primary { background: var(--grad); color: #fff; }
+        .btn-primary:hover:not(:disabled) { opacity: .88; }
+
+        .btn-secondary {
+            background: var(--surface-h);
+            border: 1px solid var(--border-b);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,.12); }
+
+        .btn-danger { background: rgba(255,77,109,.15); border: 1px solid rgba(255,77,109,.35); color: var(--danger); }
+        .btn-danger:hover:not(:disabled) { background: rgba(255,77,109,.25); }
+
+        .btn-ghost { background: transparent; color: var(--text-m); padding: .4rem .7rem; }
+        .btn-ghost:hover { color: var(--text); background: var(--surface-h); }
+
+        .btn-sm { padding: .38rem .75rem; font-size: .82rem; }
+        .btn-full { width: 100%; justify-content: center; }
+
+        #login-error {
+            color: var(--danger);
+            font-size: .85rem;
+            margin-top: .6rem;
+            display: none;
+        }
+
+        /* ── App Shell ─────────────────────────────────────────── */
+        #app {
+            display: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ── Sidebar ───────────────────────────────────────────── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 1.2rem 1rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+        }
+
+        .sidebar-logo img { width: 30px; border-radius: 6px; }
+
+        .sidebar-logo span { font-weight: 700; font-size: 1rem; }
+        .sidebar-logo .acc { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .sidebar-badge {
+            display: inline-block;
+            background: rgba(177,108,255,.18);
+            color: var(--accent);
+            font-size: .65rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            padding: .15rem .45rem;
+            border-radius: 4px;
+            margin-top: .3rem;
+            border: 1px solid rgba(177,108,255,.25);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem .6rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .6rem .85rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            color: var(--text-m);
+            font-size: .92rem;
+            font-weight: 500;
+            transition: background .17s, color .17s;
+            user-select: none;
+            margin-bottom: .2rem;
+        }
+
+        .nav-item i { width: 18px; text-align: center; font-size: .95rem; }
+
+        .nav-item:hover { background: var(--surface-h); color: var(--text); }
+
+        .nav-item.active {
+            background: rgba(177,108,255,.15);
+            color: var(--accent);
+            border: 1px solid rgba(177,108,255,.22);
+        }
+
+        .nav-item.active i { color: var(--accent); }
+
+        .sidebar-footer {
+            padding: 1rem .6rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Main Content ──────────────────────────────────────── */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 2rem;
+            background: radial-gradient(ellipse 70% 40% at 70% 0%, rgba(177,108,255,.06) 0%, transparent 70%);
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title { font-size: 1.6rem; font-weight: 700; }
+        .page-title span { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* ── Cards Grid ────────────────────────────────────────── */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .card:hover { border-color: var(--border-b); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+
+        .card-img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            background: var(--surface-h);
+            display: block;
+        }
+
+        .card-img-placeholder {
+            width: 100%;
+            height: 130px;
+            background: linear-gradient(135deg, rgba(177,108,255,.1), rgba(255,108,176,.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--text-d);
+        }
+
+        .card-body { padding: 1rem; }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: .3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-sub {
+            font-size: .82rem;
+            color: var(--text-m);
+            margin-bottom: .8rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin-bottom: .9rem;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            background: var(--surface-h);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: .18rem .6rem;
+            font-size: .75rem;
+            color: var(--text-m);
+        }
+
+        .tag-published { background: rgba(61,220,132,.1); border-color: rgba(61,220,132,.3); color: var(--success); }
+        .tag-draft { background: rgba(255,179,71,.1); border-color: rgba(255,179,71,.3); color: var(--warn); }
+        .tag-accent { background: rgba(177,108,255,.12); border-color: rgba(177,108,255,.3); color: var(--accent); }
+
+        .card-actions {
+            display: flex;
+            gap: .5rem;
+        }
+
+        /* Speaker card */
+        .speaker-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color .2s;
+        }
+
+        .speaker-card:hover { border-color: var(--border-b); }
+
+        .spk-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--surface-h);
+            flex-shrink: 0;
+            border: 2px solid var(--border-b);
+        }
+
+        .spk-avatar-placeholder {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(177,108,255,.2), rgba(255,108,176,.2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--text-d);
+            flex-shrink: 0;
+            border: 2px solid var(--border);
+        }
+
+        .spk-info { flex: 1; min-width: 0; }
+        .spk-name { font-weight: 600; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .spk-desig { font-size: .8rem; color: var(--text-m); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .spk-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+
+        /* ── Side Panel (drawer) ───────────────────────────────── */
+        .panel-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            backdrop-filter: blur(3px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s;
+        }
+
+        .panel-overlay.open { opacity: 1; pointer-events: all; }
+
+        .panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--panel-w);
+            max-width: 100vw;
+            background: var(--bg2);
+            border-left: 1px solid var(--border-b);
+            display: flex;
+            flex-direction: column;
+            z-index: 101;
+            transform: translateX(100%);
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
+            box-shadow: -8px 0 40px rgba(0,0,0,.5);
+        }
+
+        .panel.open { transform: translateX(0); }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 1.4rem;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .panel-title { font-size: 1.1rem; font-weight: 700; }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.4rem;
+        }
+
+        .panel-footer {
+            padding: 1rem 1.4rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: .75rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Ticket tiers table in event form ──────────────────── */
+        .tickets-list { display: flex; flex-direction: column; gap: .6rem; }
+
+        .ticket-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 110px auto;
+            gap: .5rem;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: .5rem .65rem;
+        }
+
+        .ticket-row input {
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--border-b);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: .85rem;
+            padding: .35rem .55rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .ticket-row input:focus { border-color: var(--accent); }
+
+        .price-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .price-wrap span {
+            color: var(--text-m);
+            font-size: .85rem;
+            padding: 0 .3rem;
+            background: rgba(255,255,255,.04);
+            border: 1px solid var(--border-b);
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+        }
+
+        .price-wrap input {
+            border-radius: 0 6px 6px 0 !important;
+            width: 80px !important;
+        }
+
+        /* ── Speakers checkbox list in event form ──────────────── */
+        .spk-checklist { display: flex; flex-direction: column; gap: .5rem; max-height: 220px; overflow-y: auto; }
+
+        .spk-check-item {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            padding: .5rem .65rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: border-color .17s;
+        }
+
+        .spk-check-item:hover { border-color: var(--border-b); }
+
+        .spk-check-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .spk-check-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--surface-h);
+            flex-shrink: 0;
+        }
+
+        .spk-check-name { font-size: .88rem; font-weight: 500; }
+        .spk-check-desig { font-size: .75rem; color: var(--text-m); }
+
+        /* ── Toast ─────────────────────────────────────────────── */
+        #toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            z-index: 999;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            background: var(--bg2);
+            border: 1px solid var(--border-b);
+            border-radius: var(--radius-sm);
+            padding: .7rem 1rem;
+            font-size: .88rem;
+            box-shadow: var(--shadow);
+            animation: toast-in .22s ease;
+            max-width: 320px;
+        }
+
+        .toast-success { border-left: 3px solid var(--success); }
+        .toast-error { border-left: 3px solid var(--danger); }
+        .toast i { font-size: 1rem; }
+        .toast-success i { color: var(--success); }
+        .toast-error i { color: var(--danger); }
+
+        @keyframes toast-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── Empty state ───────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-m);
+        }
+
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: .4rem; color: var(--text); }
+        .empty-state p { font-size: .88rem; }
+
+        /* ── Loading spinner ───────────────────────────────────── */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            gap: 1rem;
+            color: var(--text-m);
+        }
+
+        /* ── Section label ─────────────────────────────────────── */
+        .form-section {
+            margin-top: 1.2rem;
+            margin-bottom: .6rem;
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--text-d);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1rem 0;
+        }
+
+        /* ── Responsive ────────────────────────────────────────── */
+        @media (max-width: 700px) {
+            .sidebar { display: none; }
+            .panel { --panel-w: 100vw; }
+            .ticket-row { grid-template-columns: 1fr 1fr; }
+            .ticket-row:last-child > *:last-child { grid-column: 1/-1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+    <div class="login-card">
+        <div class="login-logo">
+            <img src="../assets/images/favicon.png" alt="CE Logo">
+            <span>CE-<span class="acc">Conferences</span></span>
+        </div>
+        <h2>Admin Portal</h2>
+        <p>Enter your admin password to continue.</p>
+        <form id="login-form">
+            <div class="field">
+                <label for="password-input">Password</label>
+                <input id="password-input" type="password" placeholder="••••••••••••" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+            <div id="login-error" role="alert"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     APP SHELL
+═══════════════════════════════════════════════════════════════════ -->
+<div id="app">
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="../index.html" class="sidebar-logo" target="_blank">
+                    <img src="../assets/images/favicon.png" alt="CE Logo">
+                    <span>CE-<span class="acc">Conferences</span></span>
+                </a>
+                <div class="sidebar-badge">ADMIN</div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-view="events" id="nav-events">
+                    <i class="fas fa-calendar-days"></i> Events
+                </div>
+                <div class="nav-item" data-view="speakers" id="nav-speakers">
+                    <i class="fas fa-microphone-lines"></i> Speakers
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="nav-item" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="main-content" id="main-content">
+            <!-- Injected by JS -->
+        </main>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SIDE PANEL (form drawer)
+═══════════════════════════════════════════════════════════════════ -->
+<div class="panel-overlay" id="panel-overlay"></div>
+<div class="panel" id="panel" role="dialog" aria-modal="true">
+    <div class="panel-header">
+        <span class="panel-title" id="panel-title">Form</span>
+        <button class="btn btn-ghost" id="panel-close" aria-label="Close panel"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="panel-body" id="panel-body"><!-- form injected here --></div>
+    <div class="panel-footer">
+        <button class="btn btn-primary" id="panel-save"><i class="fas fa-check"></i> Save</button>
+        <button class="btn btn-secondary" id="panel-cancel">Cancel</button>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" role="alert" aria-live="polite"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   CE-Conferences Admin Portal — Vanilla JS SPA
+══════════════════════════════════════════════════════════════════ */
+
+const $ = id => document.getElementById(id);
+const qs = (sel, ctx = document) => ctx.querySelector(sel);
+const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+// ── State ────────────────────────────────────────────────────────
+const state = {
+    token: localStorage.getItem('ce-admin-token') || null,
+    events: [],
+    speakers: [],
+    view: 'events',
+    panelMode: null,   // 'event-create' | 'event-edit' | 'speaker-create' | 'speaker-edit'
+    editingId: null,
+    loading: false
+};
+
+// ── API helpers ──────────────────────────────────────────────────
+async function api(method, path, body) {
+    const opts = {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(state.token ? { Authorization: `Bearer ${state.token}` } : {})
+        }
+    };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    return r;
+}
+
+async function apiJSON(method, path, body) {
+    const r = await api(method, path, body);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    return data;
+}
+
+// ── Toast ────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i><span>${msg}</span>`;
+    $('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3800);
+}
+
+// ── Auth ─────────────────────────────────────────────────────────
+async function init() {
+    if (!state.token) { showLogin(); return; }
+    try {
+        await apiJSON('GET', '/api/verify');
+        showApp();
+        await loadData();
+    } catch {
+        state.token = null;
+        localStorage.removeItem('ce-admin-token');
+        showLogin();
+    }
+}
+
+function showLogin() {
+    $('login-screen').style.display = 'flex';
+    $('app').style.display = 'none';
+}
+
+function showApp() {
+    $('login-screen').style.display = 'none';
+    $('app').style.display = 'block';
+    renderView();
+}
+
+function logout() {
+    state.token = null;
+    localStorage.removeItem('ce-admin-token');
+    showLogin();
+}
+
+// ── Data Loading ─────────────────────────────────────────────────
+async function loadData() {
+    renderLoadingMain();
+    try {
+        const [evData, spData] = await Promise.all([
+            apiJSON('GET', '/api/events'),
+            apiJSON('GET', '/api/speakers')
+        ]);
+        state.events = evData.events || [];
+        state.speakers = spData.speakers || [];
+    } catch (err) {
+        toast('Failed to load data: ' + err.message, 'error');
+    }
+    renderView();
+}
+
+function renderLoadingMain() {
+    $('main-content').innerHTML = `<div class="loading-screen"><div class="spinner"></div> Loading…</div>`;
+}
+
+// ── Views ────────────────────────────────────────────────────────
+function setView(view) {
+    state.view = view;
+    qsa('.nav-item[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+    renderView();
+}
+
+function renderView() {
+    if (state.view === 'events') renderEventsView();
+    else renderSpeakersView();
+}
+
+// ── Events View ──────────────────────────────────────────────────
+function renderEventsView() {
+    const main = $('main-content');
+    const events = state.events;
+
+    main.innerHTML = `
+        <div class="page-header">
+            <h1 class="page-title">Upcoming <span>Events</span></h1>
+            <button class="btn btn-primary" id="add-event-btn"><i class="fas fa-plus"></i> New Event</button>
+        </div>
+        <div class="grid" id="events-grid">
+            ${events.length === 0 ? `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-plus"></i>
+                    <h3>No events yet</h3>
+                    <p>Create your first event to get started.</p>
+                </div>` : events.map(renderEventCard).join('')}
+        </div>`;
+
+    $('add-event-btn')?.addEventListener('click', () => openEventForm());
+
+    events.forEach(ev => {
+        $(`edit-ev-${ev.id}`)?.addEventListener('click', () => openEventForm(ev));
+        $(`del-ev-${ev.id}`)?.addEventListener('click', () => deleteEvent(ev));
+    });
+}
+
+function renderEventCard(ev) {
+    const statusTag = ev.status === 'published'
+        ? `<span class="tag tag-published"><i class="fas fa-circle" style="font-size:.5rem"></i> Published</span>`
+        : `<span class="tag tag-draft"><i class="fas fa-circle" style="font-size:.5rem"></i> Draft</span>`;
+
+    const ticketCount = (ev.tickets || []).length;
+    const speakerCount = (ev.speakerIds || []).length;
+
+    const imgHtml = ev.image
+        ? `<img src="../${ev.image}" alt="${ev.title}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          + `<div class="card-img-placeholder" style="display:none"><i class="fas fa-calendar-days"></i></div>`
+        : `<div class="card-img-placeholder"><i class="fas fa-calendar-days"></i></div>`;
+
+    return `
+        <div class="card">
+            ${imgHtml}
+            <div class="card-body">
+                <div class="card-title">${esc(ev.title)}</div>
+                <div class="card-sub">${esc(ev.location || '')} ${ev.schedule ? '· ' + esc(ev.schedule) : ''}</div>
+                <div class="card-meta">
+                    ${statusTag}
+                    <span class="tag"><i class="fas fa-ticket"></i> ${ticketCount} tier${ticketCount !== 1 ? 's' : ''}</span>
+                    <span class="tag"><i class="fas fa-user-tie"></i> ${speakerCount} speaker${speakerCount !== 1 ? 's' : ''}</span>
+                    ${ev.maxBookings ? `<span class="tag"><i class="fas fa-users"></i> Max ${ev.maxBookings}</span>` : ''}
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary btn-sm" id="edit-ev-${esc(ev.id)}"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="btn btn-danger btn-sm" id="del-ev-${esc(ev.id)}"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+// ── Speakers View ────────────────────────────────────────────────
+function renderSpeakersView() {
+    const main = $('main-content');
+    const speakers = state.speakers;
+
+    main.innerHTML = `
+        <div class="page-header">
+            <h1 class="page-title">Event <span>Speakers</span></h1>
+            <button class="btn btn-primary" id="add-spk-btn"><i class="fas fa-plus"></i> New Speaker</button>
+        </div>
+        <div class="grid" id="speakers-grid">
+            ${speakers.length === 0 ? `
+                <div class="empty-state">
+                    <i class="fas fa-microphone-lines"></i>
+                    <h3>No speakers yet</h3>
+                    <p>Add speakers to assign them to events.</p>
+                </div>` : speakers.map(renderSpeakerItem).join('')}
+        </div>`;
+
+    $('add-spk-btn')?.addEventListener('click', () => openSpeakerForm());
+
+    speakers.forEach(sp => {
+        $(`edit-sp-${sp.id}`)?.addEventListener('click', () => openSpeakerForm(sp));
+        $(`del-sp-${sp.id}`)?.addEventListener('click', () => deleteSpeaker(sp));
+    });
+}
+
+function renderSpeakerItem(sp) {
+    const avatar = sp.photo
+        ? `<img src="${esc(sp.photo)}" alt="${esc(sp.name)}" class="spk-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          + `<div class="spk-avatar-placeholder" style="display:none"><i class="fas fa-user-tie"></i></div>`
+        : `<div class="spk-avatar-placeholder"><i class="fas fa-user-tie"></i></div>`;
+
+    return `
+        <div class="speaker-card">
+            ${avatar}
+            <div class="spk-info">
+                <div class="spk-name">${esc(sp.name)}</div>
+                <div class="spk-desig">${esc(sp.designation || '')}</div>
+            </div>
+            <div class="spk-actions">
+                <button class="btn btn-ghost btn-sm" id="edit-sp-${esc(sp.id)}" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-danger btn-sm" id="del-sp-${esc(sp.id)}" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`;
+}
+
+// ── Panel helpers ────────────────────────────────────────────────
+function openPanel(title) {
+    $('panel-title').textContent = title;
+    $('panel-overlay').classList.add('open');
+    $('panel').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+    $('panel-overlay').classList.remove('open');
+    $('panel').classList.remove('open');
+    document.body.style.overflow = '';
+    state.panelMode = null;
+    state.editingId = null;
+}
+
+// ── Event Form ───────────────────────────────────────────────────
+function openEventForm(ev = null) {
+    state.panelMode = ev ? 'event-edit' : 'event-create';
+    state.editingId = ev ? ev.id : null;
+    openPanel(ev ? 'Edit Event' : 'New Event');
+
+    const tickets = ev && ev.tickets && ev.tickets.length > 0
+        ? ev.tickets
+        : [
+            { key: 'standard', label: 'Standard', amountPaise: 19900 },
+            { key: 'premium',  label: 'Premium',  amountPaise: 39900 },
+            { key: 'vip',      label: 'VIP',       amountPaise: 69900 }
+          ];
+
+    const selectedSpeakers = ev ? (ev.speakerIds || []) : [];
+
+    $('panel-body').innerHTML = `
+        <div class="field">
+            <label>Event Title *</label>
+            <input id="f-title" type="text" placeholder="e.g. ICRAI-2027" value="${esc(ev?.title || '')}">
+        </div>
+        <div class="field">
+            <label>Full Title / Theme</label>
+            <input id="f-full-title" type="text" placeholder="International Conference on…" value="${esc(ev?.fullTitle || '')}">
+        </div>
+        <div class="field">
+            <label>Location</label>
+            <input id="f-location" type="text" placeholder="Dubai, UAE" value="${esc(ev?.location || '')}">
+        </div>
+        <div class="field">
+            <label>Schedule</label>
+            <input id="f-schedule" type="text" placeholder="Aug 2027" value="${esc(ev?.schedule || '')}">
+        </div>
+        <div class="field">
+            <label>Duration (days)</label>
+            <input id="f-days" type="text" placeholder="3" value="${esc(ev?.days || '')}">
+        </div>
+        <div class="field">
+            <label>Banner Image URL</label>
+            <input id="f-image" type="url" placeholder="https://… or assets/images/…" value="${esc(ev?.image || '')}">
+        </div>
+        <div class="field">
+            <label>Description</label>
+            <textarea id="f-description" placeholder="Brief conference description…">${esc(ev?.description || '')}</textarea>
+        </div>
+        <div class="field">
+            <label>Max Bookings</label>
+            <input id="f-max" type="number" min="1" placeholder="250" value="${esc(String(ev?.maxBookings || '250'))}">
+        </div>
+        <div class="field">
+            <label>Status</label>
+            <select id="f-status">
+                <option value="published" ${ev?.status === 'published' ? 'selected' : ''}>Published (visible to public)</option>
+                <option value="draft" ${ev?.status === 'draft' || !ev ? 'selected' : ''}>Draft (hidden from public)</option>
+            </select>
+        </div>
+
+        <div class="form-section">Ticket Tiers</div>
+        <div class="tickets-list" id="tickets-list">
+            ${tickets.map((t, i) => renderTicketRow(t, i)).join('')}
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:.6rem" id="add-ticket-btn">
+            <i class="fas fa-plus"></i> Add Tier
+        </button>
+
+        <div class="form-section" style="margin-top:1.4rem">Assigned Speakers</div>
+        <div class="spk-checklist" id="spk-checklist">
+            ${state.speakers.length === 0
+                ? `<p style="color:var(--text-m);font-size:.85rem">No speakers added yet. Add speakers first.</p>`
+                : state.speakers.map(sp => renderSpeakerCheck(sp, selectedSpeakers.includes(sp.id))).join('')}
+        </div>`;
+
+    $('add-ticket-btn')?.addEventListener('click', addTicketRow);
+    setupTicketDeleteListeners();
+}
+
+function renderTicketRow(t, i) {
+    const price = t.amountPaise ? Math.round(t.amountPaise / 100) : '';
+    return `
+        <div class="ticket-row" data-ticket-idx="${i}">
+            <input class="t-key" type="text" placeholder="Key" value="${esc(t.key || '')}" title="Unique key e.g. standard">
+            <input class="t-label" type="text" placeholder="Label e.g. Standard" value="${esc(t.label || '')}">
+            <div class="price-wrap">
+                <span>₹</span>
+                <input class="t-price" type="number" min="0" placeholder="199" value="${esc(String(price))}">
+            </div>
+            <button class="btn btn-danger btn-sm del-ticket-btn" title="Remove"><i class="fas fa-times"></i></button>
+        </div>`;
+}
+
+function addTicketRow() {
+    const list = $('tickets-list');
+    const idx = list.querySelectorAll('.ticket-row').length;
+    const div = document.createElement('div');
+    div.innerHTML = renderTicketRow({ key: '', label: '', amountPaise: 0 }, idx);
+    list.appendChild(div.firstElementChild);
+    setupTicketDeleteListeners();
+}
+
+function setupTicketDeleteListeners() {
+    qsa('.del-ticket-btn', $('tickets-list')).forEach(btn => {
+        btn.onclick = () => btn.closest('.ticket-row').remove();
+    });
+}
+
+function renderSpeakerCheck(sp, checked) {
+    const avatar = sp.photo
+        ? `<img src="${esc(sp.photo)}" class="spk-check-img" onerror="this.src='';">`
+        : `<img src="" class="spk-check-img" style="display:none">`;
+    return `
+        <label class="spk-check-item">
+            <input type="checkbox" value="${esc(sp.id)}" ${checked ? 'checked' : ''}>
+            ${avatar}
+            <div>
+                <div class="spk-check-name">${esc(sp.name)}</div>
+                <div class="spk-check-desig">${esc(sp.designation || '')}</div>
+            </div>
+        </label>`;
+}
+
+function collectEventForm() {
+    const tickets = qsa('.ticket-row', $('tickets-list')).map(row => ({
+        key: row.querySelector('.t-key').value.trim(),
+        label: row.querySelector('.t-label').value.trim(),
+        amountPaise: Math.round((parseFloat(row.querySelector('.t-price').value) || 0) * 100)
+    })).filter(t => t.key && t.label);
+
+    const speakerIds = qsa('#spk-checklist input[type="checkbox"]:checked').map(cb => cb.value);
+
+    return {
+        title: $('f-title').value.trim(),
+        fullTitle: $('f-full-title').value.trim(),
+        location: $('f-location').value.trim(),
+        schedule: $('f-schedule').value.trim(),
+        days: $('f-days').value.trim(),
+        image: $('f-image').value.trim(),
+        description: $('f-description').value.trim(),
+        maxBookings: parseInt($('f-max').value, 10) || 250,
+        status: $('f-status').value,
+        tickets,
+        speakerIds
+    };
+}
+
+// ── Speaker Form ─────────────────────────────────────────────────
+function openSpeakerForm(sp = null) {
+    state.panelMode = sp ? 'speaker-edit' : 'speaker-create';
+    state.editingId = sp ? sp.id : null;
+    openPanel(sp ? 'Edit Speaker' : 'New Speaker');
+
+    $('panel-body').innerHTML = `
+        <div class="field">
+            <label>Full Name *</label>
+            <input id="sp-name" type="text" placeholder="Prof. Jane Doe" value="${esc(sp?.name || '')}">
+        </div>
+        <div class="field">
+            <label>Designation / Institution</label>
+            <input id="sp-desig" type="text" placeholder="MIT | United States" value="${esc(sp?.designation || '')}">
+        </div>
+        <div class="field">
+            <label>Photo URL</label>
+            <input id="sp-photo" type="url" placeholder="https://…" value="${esc(sp?.photo || '')}">
+        </div>
+        <div id="photo-preview-wrap" style="margin-bottom:.8rem;${sp?.photo ? '' : 'display:none'}">
+            <img id="photo-preview" src="${esc(sp?.photo || '')}" alt="Preview"
+                style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border-b)"
+                onerror="this.parentElement.style.display='none'">
+        </div>
+        <div class="field">
+            <label>Biography</label>
+            <textarea id="sp-bio" rows="6" placeholder="Speaker's professional background and research interests…">${esc(sp?.bio || '')}</textarea>
+        </div>`;
+
+    // Live photo preview
+    $('sp-photo')?.addEventListener('input', function() {
+        const wrap = $('photo-preview-wrap');
+        const preview = $('photo-preview');
+        if (this.value) {
+            preview.src = this.value;
+            wrap.style.display = 'block';
+        } else {
+            wrap.style.display = 'none';
+        }
+    });
+}
+
+function collectSpeakerForm() {
+    return {
+        name: $('sp-name').value.trim(),
+        designation: $('sp-desig').value.trim(),
+        photo: $('sp-photo').value.trim(),
+        bio: $('sp-bio').value.trim()
+    };
+}
+
+// ── Save handler (shared) ────────────────────────────────────────
+async function handleSave() {
+    const saveBtn = $('panel-save');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<div class="spinner"></div> Saving…';
+
+    try {
+        if (state.panelMode === 'event-create') {
+            const body = collectEventForm();
+            if (!body.title) { toast('Event title is required', 'error'); return; }
+            const data = await apiJSON('POST', '/api/events', body);
+            state.events.push(data.event);
+            toast('Event created!');
+            closePanel();
+            renderEventsView();
+
+        } else if (state.panelMode === 'event-edit') {
+            const body = { id: state.editingId, ...collectEventForm() };
+            if (!body.title) { toast('Event title is required', 'error'); return; }
+            const data = await apiJSON('PUT', '/api/events', body);
+            const idx = state.events.findIndex(e => e.id === state.editingId);
+            if (idx !== -1) state.events[idx] = data.event;
+            toast('Event updated!');
+            closePanel();
+            renderEventsView();
+
+        } else if (state.panelMode === 'speaker-create') {
+            const body = collectSpeakerForm();
+            if (!body.name) { toast('Speaker name is required', 'error'); return; }
+            const data = await apiJSON('POST', '/api/speakers', body);
+            state.speakers.push(data.speaker);
+            toast('Speaker added!');
+            closePanel();
+            renderSpeakersView();
+
+        } else if (state.panelMode === 'speaker-edit') {
+            const body = { id: state.editingId, ...collectSpeakerForm() };
+            if (!body.name) { toast('Speaker name is required', 'error'); return; }
+            const data = await apiJSON('PUT', '/api/speakers', body);
+            const idx = state.speakers.findIndex(s => s.id === state.editingId);
+            if (idx !== -1) state.speakers[idx] = data.speaker;
+            toast('Speaker updated!');
+            closePanel();
+            renderSpeakersView();
+        }
+    } catch (err) {
+        toast(err.message, 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-check"></i> Save';
+    }
+}
+
+// ── Delete handlers ──────────────────────────────────────────────
+async function deleteEvent(ev) {
+    if (!confirm(`Delete "${ev.title}"? This cannot be undone.`)) return;
+    try {
+        await apiJSON('DELETE', '/api/events', { id: ev.id });
+        state.events = state.events.filter(e => e.id !== ev.id);
+        toast('Event deleted');
+        renderEventsView();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function deleteSpeaker(sp) {
+    if (!confirm(`Delete "${sp.name}"? They will be removed from all events.`)) return;
+    try {
+        await apiJSON('DELETE', '/api/speakers', { id: sp.id });
+        state.speakers = state.speakers.filter(s => s.id !== sp.id);
+        // Remove from all events' speakerIds
+        state.events.forEach(ev => {
+            ev.speakerIds = (ev.speakerIds || []).filter(id => id !== sp.id);
+        });
+        toast('Speaker deleted');
+        renderSpeakersView();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ── Utility ──────────────────────────────────────────────────────
+function esc(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ── Event wiring ─────────────────────────────────────────────────
+$('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('login-btn');
+    const err = $('login-error');
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Signing in…';
+    try {
+        const r = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: $('password-input').value })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Login failed');
+        state.token = data.token;
+        localStorage.setItem('ce-admin-token', data.token);
+        showApp();
+        await loadData();
+    } catch (ex) {
+        err.textContent = ex.message;
+        err.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+    }
+});
+
+$('logout-btn').addEventListener('click', logout);
+
+$('nav-events').addEventListener('click', () => setView('events'));
+$('nav-speakers').addEventListener('click', () => setView('speakers'));
+
+$('panel-close').addEventListener('click', closePanel);
+$('panel-cancel').addEventListener('click', closePanel);
+$('panel-overlay').addEventListener('click', closePanel);
+$('panel-save').addEventListener('click', handleSave);
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePanel();
+});
+
+// ── Boot ─────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
