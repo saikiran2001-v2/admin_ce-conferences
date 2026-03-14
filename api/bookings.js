@@ -38,8 +38,8 @@ async function resendEmail(booking) {
     const resendKey = process.env.RESEND_API_KEY;
     if (!resendKey) throw new Error('RESEND_API_KEY not configured');
 
-    const fromName = process.env.EMAIL_FROM_NAME || 'CE-Conferences';
-    const fromAddr = process.env.EMAIL_FROM_ADDRESS || 'noreply@ceconferences.com';
+    const from = process.env.RESEND_FROM_EMAIL;
+    if (!from) throw new Error('RESEND_FROM_EMAIL not configured');
 
     function esc(v) {
         return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -93,8 +93,9 @@ async function resendEmail(booking) {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            from: `${fromName} <${fromAddr}>`,
+            from,
             to: [booking.attendee.email],
+            reply_to: process.env.RESEND_REPLY_TO_EMAIL || undefined,
             subject: `[Resent] Your booking for ${booking.conference.label} — ${booking.bookingReference}`,
             html,
             text: [
