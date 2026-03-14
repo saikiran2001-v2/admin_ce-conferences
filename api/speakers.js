@@ -10,7 +10,7 @@ function sanitizeSpeaker(body) {
     return {
         name: String(body.name || '').slice(0, 120).trim(),
         designation: String(body.designation || '').slice(0, 120).trim(),
-        photo: String(body.photo || '').slice(0, 500).trim(),
+        photo: String(body.photo || '').slice(0, 2000000).trim(),
         bio: String(body.bio || '').slice(0, 2000).trim()
     };
 }

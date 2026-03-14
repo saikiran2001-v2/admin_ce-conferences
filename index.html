@@ -106,6 +106,8 @@
         .field input[type="password"] { letter-spacing: .1em; }
         .field textarea { resize: vertical; min-height: 90px; }
         .field select option { background: #1e1840; }
+        .img-upload-row { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-top:.5rem; }
+        .img-upload-preview { max-width:180px; max-height:100px; object-fit:cover; border-radius:8px; border:2px solid var(--border-b); display:block; margin-top:.5rem; }
 
         .btn {
             display: inline-flex;
@@ -985,7 +987,12 @@ function openEventForm(ev = null) {
         </div>
         <div class="field">
             <label>Banner Image URL</label>
-            <input id="f-image" type="url" placeholder="https://… or assets/images/…" value="${esc(ev?.image || '')}">
+            <input id="f-image" type="text" placeholder="https://… or paste URL" value="${esc(ev?.image || '')}">
+            <div class="img-upload-row">
+                <button type="button" class="btn btn-secondary btn-sm" id="f-image-upload-btn"><i class="fas fa-upload"></i> Upload from device</button>
+                <input type="file" id="f-image-file" accept="image/*" style="display:none">
+            </div>
+            ${ev?.image ? `<img id="f-image-preview" src="${esc(ev.image)}" alt="Preview" class="img-upload-preview">` : '<img id="f-image-preview" alt="Preview" class="img-upload-preview" style="display:none">'}
         </div>
         <div class="field">
             <label>Description</label>
@@ -1020,6 +1027,21 @@ function openEventForm(ev = null) {
 
     $('add-ticket-btn')?.addEventListener('click', addTicketRow);
     setupTicketDeleteListeners();
+
+    // Event banner image upload
+    $('f-image-upload-btn')?.addEventListener('click', () => $('f-image-file').click());
+    $('f-image-file')?.addEventListener('change', function() {
+        const file = this.files[0]; if (!file) return;
+        compressImage(file, 900, 0.82, dataUrl => {
+            $('f-image').value = dataUrl;
+            const p = $('f-image-preview'); p.src = dataUrl; p.style.display = 'block';
+        });
+    });
+    $('f-image')?.addEventListener('input', function() {
+        const p = $('f-image-preview');
+        if (this.value) { p.src = this.value; p.style.display = 'block'; }
+        else { p.style.display = 'none'; }
+    });
 }
 
 function renderTicketRow(t, i) {
@@ -1107,7 +1129,11 @@ function openSpeakerForm(sp = null) {
         </div>
         <div class="field">
             <label>Photo URL</label>
-            <input id="sp-photo" type="url" placeholder="https://…" value="${esc(sp?.photo || '')}">
+            <input id="sp-photo" type="text" placeholder="https://… or upload from device" value="${esc(sp?.photo || '')}">
+            <div class="img-upload-row" style="margin-top:.5rem">
+                <button type="button" class="btn btn-secondary btn-sm" id="sp-photo-upload-btn"><i class="fas fa-upload"></i> Upload from device</button>
+                <input type="file" id="sp-photo-file" accept="image/*" style="display:none">
+            </div>
         </div>
         <div id="photo-preview-wrap" style="margin-bottom:.8rem;${sp?.photo ? '' : 'display:none'}">
             <img id="photo-preview" src="${esc(sp?.photo || '')}" alt="Preview"
@@ -1129,6 +1155,17 @@ function openSpeakerForm(sp = null) {
         } else {
             wrap.style.display = 'none';
         }
+    });
+
+    // Speaker photo upload from device
+    $('sp-photo-upload-btn')?.addEventListener('click', () => $('sp-photo-file').click());
+    $('sp-photo-file')?.addEventListener('change', function() {
+        const file = this.files[0]; if (!file) return;
+        compressImage(file, 400, 0.82, dataUrl => {
+            $('sp-photo').value = dataUrl;
+            const wrap = $('photo-preview-wrap'), preview = $('photo-preview');
+            preview.src = dataUrl; wrap.style.display = 'block';
+        });
     });
 }
 
@@ -1230,6 +1267,23 @@ function esc(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+function compressImage(file, maxWidth, quality, callback) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            callback(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
 }
 
 // ── Event wiring ─────────────────────────────────────────────────

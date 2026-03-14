@@ -30,7 +30,7 @@ function sanitizeEvent(body) {
         location: String(body.location || '').slice(0, 100).trim(),
         schedule: String(body.schedule || '').slice(0, 100).trim(),
         days: String(body.days || '').slice(0, 20).trim(),
-        image: String(body.image || '').slice(0, 500).trim(),
+        image: String(body.image || '').slice(0, 2000000).trim(),
         description: String(body.description || '').slice(0, 2000).trim(),
         speakerIds: Array.isArray(body.speakerIds) ? body.speakerIds.map(String) : [],
         tickets: sanitizeTickets(body.tickets),
