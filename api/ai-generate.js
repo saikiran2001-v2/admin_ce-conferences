@@ -25,14 +25,21 @@ module.exports = async function handler(req, res) {
 
     const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
     const systemPrompt = `You are an expert conference content writer for CE-Conferences, a professional academic and industry conference organiser.
-Given an event title or topic, generate compelling, concise conference details.
+Given a conference description, title, or topic, generate compelling structured conference details.
+
+CRITICAL RULES — read carefully:
+- If the user mentions a specific month/year (e.g. "Sept 2027", "March 2028"), you MUST use EXACTLY that month and year in "schedule". Do NOT change it.
+- If the user mentions a number of days (e.g. "3 days", "2-day"), you MUST use EXACTLY that number in "days" as a plain integer string. Do NOT change it.
+- If the user mentions a specific city or country, use EXACTLY that location.
+- Only invent location, schedule, or days if the user did NOT mention them.
+
 Always return ONLY a valid JSON object with these exact fields (no markdown, no code fences, no extra text):
 {
   "fullTitle": "Full descriptive conference name (e.g. International Conference on …)",
   "description": "3-4 paragraph professional conference description covering topics, audience, and value (plain text, no HTML, max 1200 chars)",
-  "location": "Suggested host city and country (e.g. Dubai, UAE)",
-  "schedule": "Suggested month and year (e.g. Sep 2026)",
-  "days": "Suggested duration as a number (e.g. 3)"
+  "location": "Host city and country (e.g. Dubai, UAE)",
+  "schedule": "Month and year exactly as given or sensibly suggested (e.g. Sep 2027)",
+  "days": "Duration as a plain number only (e.g. 3)"
 }`;
 
     try {
@@ -43,8 +50,8 @@ Always return ONLY a valid JSON object with these exact fields (no markdown, no 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     system_instruction: { parts: [{ text: systemPrompt }] },
-                    contents: [{ role: 'user', parts: [{ text: `Conference title / topic: ${prompt}` }] }],
-                    generationConfig: { temperature: 0.7, topP: 0.9, maxOutputTokens: 1200 }
+                    contents: [{ role: 'user', parts: [{ text: `Conference description / topic:\n${prompt}` }] }],
+                    generationConfig: { temperature: 0.4, topP: 0.9, maxOutputTokens: 1200 }
                 })
             }
         );

@@ -753,7 +753,7 @@ const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
 // ── State ────────────────────────────────────────────────────────
 const state = {
-    token: localStorage.getItem('ce-admin-token') || null,
+    token: sessionStorage.getItem('ce-admin-token') || null,
     events: [],
     speakers: [],
     bookings: [],
@@ -823,7 +823,7 @@ async function init() {
         await loadData();
     } catch {
         state.token = null;
-        localStorage.removeItem('ce-admin-token');
+        sessionStorage.removeItem('ce-admin-token');
         showLogin();
     }
 }
@@ -836,13 +836,35 @@ function showLogin() {
 function showApp() {
     $('login-screen').style.display = 'none';
     $('app').style.display = 'block';
+    startIdleWatcher();
     renderView();
 }
 
 function logout() {
     state.token = null;
-    localStorage.removeItem('ce-admin-token');
+    sessionStorage.removeItem('ce-admin-token');
+    clearIdleTimer();
     showLogin();
+}
+
+// ── Idle timeout (30 min) ────────────────────────────────────────
+const IDLE_MS = 30 * 60 * 1000;
+let _idleTimer = null;
+function resetIdleTimer() {
+    clearIdleTimer();
+    _idleTimer = setTimeout(() => {
+        toast('Session expired due to inactivity.', 'error');
+        logout();
+    }, IDLE_MS);
+}
+function clearIdleTimer() {
+    if (_idleTimer) { clearTimeout(_idleTimer); _idleTimer = null; }
+}
+function startIdleWatcher() {
+    ['mousemove','keydown','click','touchstart','scroll'].forEach(e =>
+        document.addEventListener(e, resetIdleTimer, { passive: true })
+    );
+    resetIdleTimer();
 }
 
 // ── Data Loading ─────────────────────────────────────────────────
@@ -1313,15 +1335,18 @@ function openEventForm(ev = null) {
 
     // AI Generate event details
     $('ai-gen-btn')?.addEventListener('click', async function () {
+        const userPrompt = $('ai-gen-prompt')?.value.trim();
         const title = $('f-title')?.value.trim();
-        if (!title) { toast('Enter an event title first', 'error'); return; }
+        // Use the free-text prompt if filled; fall back to the title field
+        const promptText = userPrompt || title;
+        if (!promptText) { toast('Enter a description or event title first', 'error'); return; }
         const btn = this;
         const statusEl = $('ai-gen-status');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Generating\u2026';
         statusEl.textContent = '';
         try {
-            const data = await apiJSON('POST', '/api/ai-generate', { title });
+            const data = await apiJSON('POST', '/api/ai-generate', { title: promptText });
             if (data.fullTitle)    { const el = $('f-full-title'); if (el && !el.value.trim()) el.value = data.fullTitle; else if (el) el.value = data.fullTitle; }
             if (data.description)  { const el = $('f-description'); if (el) el.value = data.description; }
             if (data.location)     { const el = $('f-location');    if (el && !el.value.trim()) el.value = data.location; }
@@ -1611,7 +1636,7 @@ $('login-form').addEventListener('submit', async e => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Login failed');
         state.token = data.token;
-        localStorage.setItem('ce-admin-token', data.token);
+        sessionStorage.setItem('ce-admin-token', data.token);
         showApp();
         await loadData();
     } catch (ex) {
