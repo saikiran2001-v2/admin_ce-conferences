@@ -779,15 +779,18 @@
             <img src="assets/images/favicon.png" alt="CE Logo">
             <span>CE-<span class="acc">Conferences</span></span>
         </div>
+        <button class="hamburger-btn" id="topbar-refresh-btn" aria-label="Refresh" style="margin-left:auto">
+            <i class="fas fa-rotate-right"></i>
+        </button>
     </header>
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="../index.html" class="sidebar-logo" target="_blank">
+                <div class="sidebar-logo">
                     <img src="assets/images/favicon.png" alt="CE Logo">
                     <span>CE-<span class="acc">Conferences</span></span>
-                </a>
+                </div>
                 <div class="sidebar-badge">ADMIN</div>
             </div>
             <nav class="sidebar-nav">
@@ -1020,7 +1023,10 @@ function renderEventsView() {
     main.innerHTML = `
         <div class="page-header">
             <h1 class="page-title">Upcoming <span>Events</span></h1>
-            <button class="btn btn-primary" id="add-event-btn"><i class="fas fa-plus"></i> New Event</button>
+            <div style="display:flex;gap:.5rem">
+                <button class="btn btn-secondary" id="refresh-events-btn"><i class="fas fa-rotate-right"></i> Refresh</button>
+                <button class="btn btn-primary" id="add-event-btn"><i class="fas fa-plus"></i> New Event</button>
+            </div>
         </div>
         <div class="grid" id="events-grid">
             ${events.length === 0 ? `
@@ -1032,6 +1038,7 @@ function renderEventsView() {
         </div>`;
 
     $('add-event-btn')?.addEventListener('click', () => openEventForm());
+    $('refresh-events-btn')?.addEventListener('click', () => loadData());
 
     events.forEach(ev => {
         $(`edit-ev-${ev.id}`)?.addEventListener('click', () => openEventForm(ev));
@@ -1300,7 +1307,10 @@ function renderSpeakersView() {
     main.innerHTML = `
         <div class="page-header">
             <h1 class="page-title">Event <span>Speakers</span></h1>
-            <button class="btn btn-primary" id="add-spk-btn"><i class="fas fa-plus"></i> New Speaker</button>
+            <div style="display:flex;gap:.5rem">
+                <button class="btn btn-secondary" id="refresh-speakers-btn"><i class="fas fa-rotate-right"></i> Refresh</button>
+                <button class="btn btn-primary" id="add-spk-btn"><i class="fas fa-plus"></i> New Speaker</button>
+            </div>
         </div>
         <div class="grid" id="speakers-grid">
             ${speakers.length === 0 ? `
@@ -1312,6 +1322,7 @@ function renderSpeakersView() {
         </div>`;
 
     $('add-spk-btn')?.addEventListener('click', () => openSpeakerForm());
+    $('refresh-speakers-btn')?.addEventListener('click', () => loadData());
 
     speakers.forEach(sp => {
         $(`edit-sp-${sp.id}`)?.addEventListener('click', () => openSpeakerForm(sp));
@@ -1814,6 +1825,7 @@ $('hamburger-btn').addEventListener('click', () => {
     qs('.sidebar').classList.add('mob-open');
     $('sidebar-backdrop').classList.add('open');
 });
+$('topbar-refresh-btn').addEventListener('click', () => loadData());
 $('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
 
 $('nav-events').addEventListener('click', () => setView('events'));
