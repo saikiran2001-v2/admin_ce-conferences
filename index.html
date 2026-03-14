@@ -969,6 +969,12 @@ function openEventForm(ev = null) {
             <label>Event Title *</label>
             <input id="f-title" type="text" placeholder="e.g. ICRAI-2027" value="${esc(ev?.title || '')}">
         </div>
+        <div style="margin-bottom:1.2rem">
+            <button type="button" class="btn btn-secondary btn-sm" id="ai-gen-btn" style="gap:.5rem">
+                <i class="fas fa-wand-magic-sparkles"></i> Generate Details with Gemini
+            </button>
+            <span id="ai-gen-status" style="margin-left:.8rem;font-size:.82rem;color:var(--text-m)"></span>
+        </div>
         <div class="field">
             <label>Full Title / Theme</label>
             <input id="f-full-title" type="text" placeholder="International Conference on…" value="${esc(ev?.fullTitle || '')}">
@@ -1027,6 +1033,31 @@ function openEventForm(ev = null) {
 
     $('add-ticket-btn')?.addEventListener('click', addTicketRow);
     setupTicketDeleteListeners();
+
+    // AI Generate event details
+    $('ai-gen-btn')?.addEventListener('click', async function () {
+        const title = $('f-title')?.value.trim();
+        if (!title) { toast('Enter an event title first', 'error'); return; }
+        const btn = this;
+        const statusEl = $('ai-gen-status');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Generating\u2026';
+        statusEl.textContent = '';
+        try {
+            const data = await apiJSON('POST', '/api/ai-generate', { title });
+            if (data.fullTitle)    { const el = $('f-full-title'); if (el && !el.value.trim()) el.value = data.fullTitle; else if (el) el.value = data.fullTitle; }
+            if (data.description)  { const el = $('f-description'); if (el) el.value = data.description; }
+            if (data.location)     { const el = $('f-location');    if (el && !el.value.trim()) el.value = data.location; }
+            if (data.schedule)     { const el = $('f-schedule');    if (el && !el.value.trim()) el.value = data.schedule; }
+            if (data.days)         { const el = $('f-days');        if (el && !el.value.trim()) el.value = data.days; }
+            statusEl.innerHTML = '<i class="fas fa-check" style="color:#4ade80"></i> Fields populated — review and adjust as needed.';
+        } catch (err) {
+            statusEl.innerHTML = `<span style="color:#f87171"><i class="fas fa-exclamation-circle"></i> ${esc(err?.message || 'Generation failed')}</span>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Details with Gemini';
+        }
+    });
 
     // Event banner image upload
     $('f-image-upload-btn')?.addEventListener('click', () => $('f-image-file').click());
