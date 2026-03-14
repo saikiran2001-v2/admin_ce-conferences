@@ -605,18 +605,29 @@
             color: var(--text-m);
         }
 
+        /* ── Bookings toolbar ───────────────────────────────── */
+        .bookings-toolbar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: 1rem; }
+        .bookings-search-wrap { position: relative; flex: 1 1 220px; }
+        .bookings-search-wrap i { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: var(--text-m); font-size: .85rem; pointer-events: none; }
+        .bookings-search { width: 100%; padding: .55rem .75rem .55rem 2.2rem; background: var(--surface); border: 1px solid var(--border-b); border-radius: 8px; color: var(--text); font-size: .88rem; outline: none; transition: border-color .15s; }
+        .bookings-search::placeholder { color: var(--text-d); }
+        .bookings-search:focus { border-color: var(--accent); }
+        .bookings-filter { padding: .55rem .75rem; background: var(--surface); border: 1px solid var(--border-b); border-radius: 8px; color: var(--text); font-size: .85rem; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239d8fc2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .7rem center; padding-right: 2rem; transition: border-color .15s; }
+        .bookings-filter:focus { border-color: var(--accent); }
+        .bookings-filter option { background: #1a1430; color: var(--text); }
+        .bookings-count { font-size: .82rem; color: var(--text-m); white-space: nowrap; margin-left: auto; }
+
         /* ── Bookings table ─────────────────────────────────────── */
-        .bookings-table-wrap { overflow-x: auto; margin-top: .5rem; }
+        .bookings-table-wrap { overflow-x: auto; margin-top: .5rem; border-radius: 10px; border: 1px solid var(--border); }
         .bookings-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-        .bookings-table th { text-align: left; padding: .6rem .8rem; background: var(--surface-h); color: var(--text-muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
+        .bookings-table th { text-align: left; padding: .65rem .8rem; background: var(--surface-h); color: var(--text-m); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
         .bookings-table td { padding: .6rem .8rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
         .bookings-table tr:last-child td { border-bottom: none; }
-        .bookings-table tr:hover td { background: var(--surface-h); }
-        .booking-ref { font-size: .78rem; background: var(--surface-h); padding: 2px 5px; border-radius: 4px; }
-        .email-cell { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .date-cell { white-space: nowrap; }
+        .bookings-table tr:hover td { background: var(--surface); }
+        .booking-ref { font-family: monospace; font-size: .75rem; background: var(--surface-h); padding: 3px 6px; border-radius: 4px; color: var(--accent); }
+        .email-cell { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-m); }
+        .date-cell { white-space: nowrap; color: var(--text-m); }
         .amount-cell { white-space: nowrap; font-weight: 600; }
-        .bookings-summary { margin-bottom: .75rem; display: flex; gap: .5rem; flex-wrap: wrap; }
 
         /* ── Section label ─────────────────────────────────────── */
         .form-section {
