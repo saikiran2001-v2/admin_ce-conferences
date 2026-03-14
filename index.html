@@ -969,11 +969,15 @@ function openEventForm(ev = null) {
             <label>Event Title *</label>
             <input id="f-title" type="text" placeholder="e.g. ICRAI-2027" value="${esc(ev?.title || '')}">
         </div>
-        <div style="margin-bottom:1.2rem">
-            <button type="button" class="btn btn-secondary btn-sm" id="ai-gen-btn" style="gap:.5rem">
-                <i class="fas fa-wand-magic-sparkles"></i> Generate Details with Gemini
-            </button>
-            <span id="ai-gen-status" style="margin-left:.8rem;font-size:.82rem;color:var(--text-m)"></span>
+        <div class="field" style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:10px;padding:1rem">
+            <label style="display:flex;align-items:center;gap:.4rem;color:var(--accent)"><i class="fas fa-wand-magic-sparkles"></i> Generate with Gemini</label>
+            <textarea id="ai-gen-prompt" rows="3" placeholder="Describe what you want Gemini to generate, e.g.: &#10;International conference on AI and robotics in healthcare, Dubai, Sept 2027, 3 days, industry + academic audience."></textarea>
+            <div style="display:flex;align-items:center;gap:.8rem;margin-top:.6rem;flex-wrap:wrap">
+                <button type="button" class="btn btn-secondary btn-sm" id="ai-gen-btn" style="gap:.5rem">
+                    <i class="fas fa-wand-magic-sparkles"></i> Generate
+                </button>
+                <span id="ai-gen-status" style="font-size:.82rem;color:var(--text-m)"></span>
+            </div>
         </div>
         <div class="field">
             <label>Full Title / Theme</label>
