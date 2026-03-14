@@ -34,27 +34,22 @@ async function getAllBookings(redis) {
         .sort((a, b) => new Date(b.issuedAt) - new Date(a.issuedAt));
 }
 
-async function resendEmail(booking) {
-    const resendKey = process.env.RESEND_API_KEY;
-    if (!resendKey) throw new Error('RESEND_API_KEY not configured');
+function esc(v) {
+    return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
-    const from = process.env.RESEND_FROM_EMAIL;
-    if (!from) throw new Error('RESEND_FROM_EMAIL not configured');
+function fmtInr(paise) {
+    return `INR ${Math.round((paise || 0) / 100).toLocaleString('en-IN')}`;
+}
 
-    function esc(v) {
-        return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-    function fmtInr(paise) {
-        return `INR ${Math.round((paise || 0) / 100).toLocaleString('en-IN')}`;
-    }
-
-    const html = `
+function buildPassHtml(booking) {
+    return `
 <div style="margin:0;padding:24px;background:#f6f2ff;font-family:Arial,sans-serif;color:#1b1537;">
   <div style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e9defa;">
     <div style="padding:28px 32px;background:linear-gradient(135deg,#120e28,#2a1d59);color:#ffffff;">
       <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.75;">CE-CONFERENCES</div>
-      <h1 style="margin:10px 0 8px;font-size:28px;">Your booking confirmation (resent)</h1>
-      <p style="margin:0;opacity:.82;font-size:15px;">Here are your booking details for ${esc(booking.conference.label)}.</p>
+      <h1 style="margin:10px 0 8px;font-size:28px;">Booking Confirmation</h1>
+      <p style="margin:0;opacity:.82;font-size:15px;">Your booking details for ${esc(booking.conference.label)}.</p>
     </div>
     <div style="padding:28px 32px;">
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;">
@@ -88,18 +83,28 @@ async function resendEmail(booking) {
     </div>
   </div>
 </div>`;
+}
+
+async function sendEmail(booking, toEmail) {
+    const resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey) throw new Error('RESEND_API_KEY not configured');
+
+    const from = process.env.RESEND_FROM_EMAIL;
+    if (!from) throw new Error('RESEND_FROM_EMAIL not configured');
+
+    const html = buildPassHtml(booking);
 
     const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
             from,
-            to: [booking.attendee.email],
+            to: [toEmail],
             reply_to: process.env.RESEND_REPLY_TO_EMAIL || undefined,
-            subject: `[Resent] Your booking for ${booking.conference.label} — ${booking.bookingReference}`,
+            subject: `Your booking for ${booking.conference.label} — ${booking.bookingReference}`,
             html,
             text: [
-                'CE-CONFERENCES BOOKING CONFIRMATION (RESENT)',
+                'CE-CONFERENCES BOOKING CONFIRMATION',
                 '',
                 `Booking Reference: ${booking.bookingReference}`,
                 `Attendee: ${booking.attendee.name}`,
@@ -124,21 +129,40 @@ module.exports = async function handler(req, res) {
     try {
         const redis = getRedis();
 
-        // POST /api/bookings?action=resend — resend a pass email
+        // POST /api/bookings — resend/send pass email (optionally to a different address)
         if (req.method === 'POST') {
-            const { bookingReference } = req.body || {};
+            const { bookingReference, overrideEmail } = req.body || {};
             if (!bookingReference) return res.status(400).json({ error: 'bookingReference required' });
 
             const raw = await redis.get(bookingKey('booking', bookingReference));
             if (!raw) return res.status(404).json({ error: 'Booking not found' });
             const booking = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
-            await resendEmail(booking);
-            return res.status(200).json({ ok: true, email: booking.attendee.email });
+            // Basic email format check when sending to a different address
+            const toEmail = overrideEmail
+                ? overrideEmail.trim().toLowerCase()
+                : booking.attendee.email;
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+                return res.status(400).json({ error: 'Invalid email address' });
+            }
+
+            await sendEmail(booking, toEmail);
+            return res.status(200).json({ ok: true, email: toEmail });
         }
 
-        // GET /api/bookings — list all bookings
+        // GET /api/bookings — list all bookings, or get pass HTML for a specific booking
         if (req.method === 'GET') {
+            const { action, ref } = req.query || {};
+
+            // GET /api/bookings?action=pass-html&ref=CE-XXX
+            if (action === 'pass-html' && ref) {
+                const raw = await redis.get(bookingKey('booking', ref));
+                if (!raw) return res.status(404).json({ error: 'Booking not found' });
+                const booking = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                return res.status(200).json({ html: buildPassHtml(booking), booking });
+            }
+
             const bookings = await getAllBookings(redis);
             return res.status(200).json({ bookings, total: bookings.length });
         }
