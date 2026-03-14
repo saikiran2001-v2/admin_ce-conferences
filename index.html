@@ -764,9 +764,13 @@ const $ = id => document.getElementById(id);
 const qs = (sel, ctx = document) => ctx.querySelector(sel);
 const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
+// Wipe any legacy persisted token — auth is now memory-only
+sessionStorage.removeItem('ce-admin-token');
+localStorage.removeItem('ce-admin-token');
+
 // ── State ────────────────────────────────────────────────────────
 const state = {
-    token: sessionStorage.getItem('ce-admin-token') || null,
+    token: null,   // never persisted — refresh or close always requires re-login
     events: [],
     speakers: [],
     bookings: [],
@@ -836,7 +840,6 @@ async function init() {
         await loadData();
     } catch {
         state.token = null;
-        sessionStorage.removeItem('ce-admin-token');
         showLogin();
     }
 }
@@ -855,7 +858,6 @@ function showApp() {
 
 function logout() {
     state.token = null;
-    sessionStorage.removeItem('ce-admin-token');
     clearIdleTimer();
     showLogin();
 }
@@ -1696,7 +1698,7 @@ $('login-form').addEventListener('submit', async e => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Login failed');
         state.token = data.token;
-        sessionStorage.setItem('ce-admin-token', data.token);
+        state.token = data.token;
         showApp();
         await loadData();
     } catch (ex) {
