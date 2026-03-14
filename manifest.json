@@ -1,0 +1,19 @@
+{
+    "name": "CE-Conferences Admin",
+    "short_name": "CEConf Admin",
+    "description": "Admin portal for managing CE-Conferences events, speakers, and bookings.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#120e28",
+    "theme_color": "#120e28",
+    "icons": [
+        {
+            "src": "assets/images/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

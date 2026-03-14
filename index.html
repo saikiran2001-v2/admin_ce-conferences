@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CE-Conferences Admin</title>
     <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#120e28">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CEConf Admin">
+    <link rel="apple-touch-icon" href="assets/images/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -714,6 +720,9 @@
                 </div>
             </nav>
             <div class="sidebar-footer">
+                <div class="nav-item" id="install-pwa-btn" style="display:none">
+                    <i class="fas fa-download"></i> Install App
+                </div>
                 <div class="nav-item" id="logout-btn">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </div>
@@ -1717,5 +1726,37 @@ document.addEventListener('keydown', e => {
 // ── Boot ─────────────────────────────────────────────────────────
 init();
 </script>
-</body>
+
+<script>
+// ── PWA: Service Worker + Install Prompt ─────────────────────────
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+(function () {
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('install-pwa-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.style.display = '';
+    });
+
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            if (outcome === 'accepted') installBtn.style.display = 'none';
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        if (installBtn) installBtn.style.display = 'none';
+    });
+})();
+</script>
 </html>
