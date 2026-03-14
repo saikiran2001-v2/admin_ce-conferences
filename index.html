@@ -1054,8 +1054,11 @@ function renderEventCard(ev) {
     const ticketCount = (ev.tickets || []).length;
     const speakerCount = (ev.speakerIds || []).length;
 
-    const imgHtml = ev.image
-        ? `<img src="../${ev.image}" alt="${ev.title}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    const _imgSrc = ev.image
+        ? (ev.image.startsWith('http') ? ev.image : `https://ce-conferences.vercel.app/${ev.image}`)
+        : null;
+    const imgHtml = _imgSrc
+        ? `<img src="${_imgSrc}" alt="${esc(ev.title)}" class="card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
           + `<div class="card-img-placeholder" style="display:none"><i class="fas fa-calendar-days"></i></div>`
         : `<div class="card-img-placeholder"><i class="fas fa-calendar-days"></i></div>`;
 
