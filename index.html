@@ -45,7 +45,7 @@
             font-family: 'Outfit', sans-serif;
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
+            min-height: 100dvh;
             overflow: hidden;
         }
 
@@ -167,13 +167,15 @@
         /* ── App Shell ─────────────────────────────────────────── */
         #app {
             display: none;
-            height: 100vh;
+            flex-direction: column;
+            height: 100dvh;
             overflow: hidden;
         }
 
         .app-layout {
             display: flex;
-            height: 100vh;
+            flex: 1;
+            min-height: 0;
         }
 
         /* ── Sidebar ───────────────────────────────────────────── */
@@ -255,9 +257,11 @@
         /* ── Main Content ──────────────────────────────────────── */
         .main-content {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
             padding: 2rem;
+            padding-bottom: 4rem;
             background: radial-gradient(ellipse 70% 40% at 70% 0%, rgba(177,108,255,.06) 0%, transparent 70%);
         }
 
@@ -659,9 +663,77 @@
             margin: 1rem 0;
         }
 
+        /* ── Mobile top bar ────────────────────────────────────── */
+        .mobile-topbar {
+            display: none;
+            align-items: center;
+            gap: .75rem;
+            padding: .7rem 1rem;
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn {
+            background: var(--surface-h);
+            border: 1px solid var(--border-b);
+            color: var(--text);
+            border-radius: var(--radius-sm);
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-weight: 700;
+            font-size: .95rem;
+        }
+
+        .topbar-brand img { width: 26px; border-radius: 5px; }
+        .topbar-brand .acc { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* ── Sidebar backdrop (mobile) ─────────────────────────── */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.55);
+            backdrop-filter: blur(2px);
+            z-index: 199;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s;
+        }
+
+        .sidebar-backdrop.open { opacity: 1; pointer-events: all; }
+
         /* ── Responsive ────────────────────────────────────────── */
         @media (max-width: 700px) {
-            .sidebar { display: none; }
+            .mobile-topbar { display: flex; }
+            .sidebar-backdrop { display: block; }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                z-index: 200;
+                width: 260px;
+                transform: translateX(-100%);
+                transition: transform .28s cubic-bezier(.4,0,.2,1);
+                box-shadow: 8px 0 40px rgba(0,0,0,.6);
+            }
+
+            .sidebar.mob-open { transform: translateX(0); }
+
             .panel { --panel-w: 100vw; }
             .ticket-row { grid-template-columns: 1fr 1fr; }
             .ticket-row:last-child > *:last-child { grid-column: 1/-1; }
@@ -698,6 +770,16 @@
      APP SHELL
 ═══════════════════════════════════════════════════════════════════ -->
 <div id="app">
+    <!-- Mobile top bar -->
+    <header class="mobile-topbar" id="mobile-topbar">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-brand">
+            <img src="assets/images/favicon.png" alt="CE Logo">
+            <span>CE-<span class="acc">Conferences</span></span>
+        </div>
+    </header>
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -734,6 +816,7 @@
             <!-- Injected by JS -->
         </main>
     </div>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -856,7 +939,7 @@ function showLogin() {
 
 function showApp() {
     $('login-screen').style.display = 'none';
-    $('app').style.display = 'block';
+    $('app').style.display = 'flex';
     startIdleWatcher();
     renderView();
 }
@@ -911,9 +994,15 @@ function renderLoadingMain() {
 }
 
 // ── Views ────────────────────────────────────────────────────────
+function closeMobileSidebar() {
+    qs('.sidebar').classList.remove('mob-open');
+    $('sidebar-backdrop').classList.remove('open');
+}
+
 function setView(view) {
     state.view = view;
     qsa('.nav-item[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+    closeMobileSidebar();
     renderView();
 }
 
@@ -1719,7 +1808,13 @@ $('login-form').addEventListener('submit', async e => {
     }
 });
 
-$('logout-btn').addEventListener('click', logout);
+$('logout-btn').addEventListener('click', () => { closeMobileSidebar(); logout(); });
+
+$('hamburger-btn').addEventListener('click', () => {
+    qs('.sidebar').classList.add('mob-open');
+    $('sidebar-backdrop').classList.add('open');
+});
+$('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
 
 $('nav-events').addEventListener('click', () => setView('events'));
 $('nav-speakers').addEventListener('click', () => setView('speakers'));
