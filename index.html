@@ -793,6 +793,27 @@ function toast(msg, type = 'success') {
     setTimeout(() => el.remove(), 3800);
 }
 
+// ── PDF libraries (lazy-loaded) ─────────────────────────────────
+let _pdfLibsPromise = null;
+function loadPdfLibs() {
+    if (window.html2canvas && window.jspdf?.jsPDF) return Promise.resolve();
+    if (_pdfLibsPromise) return _pdfLibsPromise;
+    function loadScript(src, check) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = () => check() ? resolve() : reject(new Error('Library failed to initialise'));
+            s.onerror = () => reject(new Error('Failed to load ' + src));
+            document.head.appendChild(s);
+        });
+    }
+    _pdfLibsPromise = Promise.all([
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', () => !!window.html2canvas),
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => !!window.jspdf?.jsPDF),
+    ]);
+    return _pdfLibsPromise;
+}
+
 // ── Auth ─────────────────────────────────────────────────────────
 async function init() {
     if (!state.token) { showLogin(); return; }
@@ -1048,19 +1069,31 @@ async function renderBookingsView() {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 try {
+                    // Load libraries on first use
+                    await loadPdfLibs();
+
                     const data = await apiJSON('GET', `/api/bookings?action=pass-html&ref=${encodeURIComponent(ref)}`);
-                    const blob = new Blob([
-                        `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pass — ${ref}</title></head><body style="margin:0">${data.html}</body></html>`
-                    ], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${ref.toLowerCase()}-pass.html`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
-                    toast('Pass downloaded');
+
+                    // Render HTML in a hidden container
+                    const container = document.createElement('div');
+                    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:720px;background:#f6f2ff;';
+                    container.innerHTML = data.html;
+                    document.body.appendChild(container);
+
+                    const canvas = await window.html2canvas(container, { scale: 2, backgroundColor: '#f6f2ff', useCORS: true });
+                    document.body.removeChild(container);
+
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+                    const pw = pdf.internal.pageSize.getWidth();
+                    const ph = pdf.internal.pageSize.getHeight();
+                    const m = 24;
+                    const ratio = canvas.width / canvas.height;
+                    let w = pw - m * 2, h = w / ratio;
+                    if (h > ph - m * 2) { h = ph - m * 2; w = h * ratio; }
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pw - w) / 2, (ph - h) / 2, w, h, undefined, 'FAST');
+                    pdf.save(`${ref.toLowerCase()}-pass.pdf`);
+                    toast('PDF downloaded');
                 } catch (err) {
                     toast('Download failed: ' + err.message, 'error');
                 } finally {
