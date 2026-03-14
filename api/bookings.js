@@ -43,43 +43,37 @@ function fmtInr(paise) {
 }
 
 function buildPassHtml(booking) {
+    const f = (label, value) => `
+        <td style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.6);margin-bottom:6px;">${label}</div>
+          <div style="font-size:15px;font-weight:700;color:#fff;word-break:break-word;">${value}</div>
+        </td>`;
+
     return `
-<div style="margin:0;padding:24px;background:#f6f2ff;font-family:Arial,sans-serif;color:#1b1537;">
-  <div style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e9defa;">
-    <div style="padding:28px 32px;background:linear-gradient(135deg,#120e28,#2a1d59);color:#ffffff;">
-      <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.75;">CE-CONFERENCES</div>
-      <h1 style="margin:10px 0 8px;font-size:28px;">Booking Confirmation</h1>
-      <p style="margin:0;opacity:.82;font-size:15px;">Your booking details for ${esc(booking.conference.label)}.</p>
+<div style="margin:0;padding:24px;background:#f4f1ff;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:680px;margin:0 auto;background:linear-gradient(135deg,#120e28,#2a1d59);border-radius:24px;padding:32px;color:#fff;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:0;">
+      <tr>
+        <td style="vertical-align:top;">
+          <div style="letter-spacing:.2em;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,.7);">CE-CONFERENCES</div>
+          <div style="margin:8px 0 6px;font-size:26px;font-weight:700;color:#fff;">${esc(booking.conference.label)}</div>
+          <div style="color:rgba(255,255,255,.78);font-size:14px;">${esc(booking.conference.location)} &middot; ${esc(booking.conference.schedule)}</div>
+        </td>
+        <td style="vertical-align:top;text-align:right;width:80px;">
+          <div style="display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid rgba(134,239,172,.35);background:rgba(16,185,129,.18);color:#86efac;font-weight:700;font-size:12px;letter-spacing:.08em;">PAID</div>
+        </td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="6" style="border:0;margin-top:22px;">
+      <tr>${f('Attendee', esc(booking.attendee.name))}${f('Booking Ref', esc(booking.bookingReference))}</tr>
+      <tr>${f('Pass Type', esc(booking.ticket.label))}${f('Tickets', esc(String(booking.ticket.quantity)))}</tr>
+      <tr>${f('Total Paid', fmtInr(booking.ticket.totalAmount))}${f('Payment ID', esc(booking.paymentId))}</tr>
+    </table>
+    <div style="margin-top:16px;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,.05);font-size:13px;color:rgba(255,255,255,.55);">
+      Issued: ${esc(new Date(booking.issuedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }))}
     </div>
-    <div style="padding:28px 32px;">
-      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;">
-        <div style="padding:16px;border-radius:16px;background:#f7f4ff;border:1px solid #ece4ff;">
-          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6b5a93;margin-bottom:6px;">Attendee</div>
-          <div style="font-size:16px;font-weight:700;">${esc(booking.attendee.name)}</div>
-        </div>
-        <div style="padding:16px;border-radius:16px;background:#f7f4ff;border:1px solid #ece4ff;">
-          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6b5a93;margin-bottom:6px;">Booking Reference</div>
-          <div style="font-size:16px;font-weight:700;">${esc(booking.bookingReference)}</div>
-        </div>
-        <div style="padding:16px;border-radius:16px;background:#f7f4ff;border:1px solid #ece4ff;">
-          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6b5a93;margin-bottom:6px;">Conference</div>
-          <div style="font-size:16px;font-weight:700;">${esc(booking.conference.label)}</div>
-          <div style="margin-top:6px;color:#5e527e;font-size:14px;">${esc(booking.conference.location)} | ${esc(booking.conference.schedule)}</div>
-        </div>
-        <div style="padding:16px;border-radius:16px;background:#f7f4ff;border:1px solid #ece4ff;">
-          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6b5a93;margin-bottom:6px;">Pass</div>
-          <div style="font-size:16px;font-weight:700;">${esc(booking.ticket.label)}</div>
-          <div style="margin-top:6px;color:#5e527e;font-size:14px;">${esc(String(booking.ticket.quantity))} ticket(s) | ${fmtInr(booking.ticket.totalAmount)}</div>
-        </div>
-      </div>
-      <div style="margin-top:20px;padding:18px 20px;border-radius:16px;background:#f9fafb;border:1px solid #e5e7eb;">
-        <div style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;margin-bottom:8px;">Payment</div>
-        <div style="font-size:15px;line-height:1.7;">
-          <strong>Payment ID:</strong> ${esc(booking.paymentId)}<br>
-          <strong>Issued At:</strong> ${esc(new Date(booking.issuedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }))}
-        </div>
-      </div>
-      <p style="margin:22px 0 0;font-size:14px;line-height:1.7;color:#5e527e;">Please keep this email and your booking reference for check-in.</p>
+    <div style="margin-top:16px;font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;">
+      Please keep this pass and your booking reference for check-in.
     </div>
   </div>
 </div>`;

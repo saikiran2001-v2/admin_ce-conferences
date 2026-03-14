@@ -1217,11 +1217,11 @@ async function renderBookingsView() {
 
                     // Render HTML in a hidden container
                     const container = document.createElement('div');
-                    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:720px;background:#f6f2ff;';
+                    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:720px;background:#f4f1ff;';
                     container.innerHTML = data.html;
                     document.body.appendChild(container);
 
-                    const canvas = await window.html2canvas(container, { scale: 2, backgroundColor: '#f6f2ff', useCORS: true });
+                    const canvas = await window.html2canvas(container, { scale: 2, backgroundColor: '#f4f1ff', useCORS: true });
                     document.body.removeChild(container);
 
                     const { jsPDF } = window.jspdf;
