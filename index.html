@@ -923,66 +923,132 @@ async function renderBookingsView() {
         return;
     }
 
-    const bookings = state.bookings;
-    if (bookings.length === 0) {
+    if (state.bookings.length === 0) {
         $('bookings-content').innerHTML = `<div class="empty-state"><i class="fas fa-ticket"></i><h3>No bookings yet</h3><p>Bookings will appear here once attendees complete payment.</p></div>`;
         return;
     }
 
-    $('bookings-content').innerHTML = `
-        <div class="bookings-summary">
-            <span class="tag"><i class="fas fa-ticket"></i> ${bookings.length} total booking${bookings.length !== 1 ? 's' : ''}</span>
-        </div>
-        <div class="bookings-table-wrap">
-        <table class="bookings-table">
-            <thead>
-                <tr>
-                    <th>Reference</th>
-                    <th>Attendee</th>
-                    <th>Email</th>
-                    <th>Conference</th>
-                    <th>Pass</th>
-                    <th>Qty</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${bookings.map((b, i) => `
-                <tr>
-                    <td><code class="booking-ref">${esc(b.bookingReference)}</code></td>
-                    <td>${esc(b.attendee?.name || '—')}</td>
-                    <td class="email-cell">${esc(b.attendee?.email || '—')}</td>
-                    <td>${esc(b.conference?.label || '—')}</td>
-                    <td>${esc(b.ticket?.label || '—')}</td>
-                    <td>${esc(String(b.ticket?.quantity || 1))}</td>
-                    <td class="amount-cell">INR ${Math.round((b.ticket?.totalAmount || 0) / 100).toLocaleString('en-IN')}</td>
-                    <td class="date-cell">${esc(b.issuedAt ? new Date(b.issuedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—')}</td>
-                    <td><button class="btn btn-secondary btn-sm resend-btn" data-ref="${esc(b.bookingReference)}" data-email="${esc(b.attendee?.email || '')}"><i class="fas fa-paper-plane"></i> Resend</button></td>
-                </tr>`).join('')}
-            </tbody>
-        </table>
-        </div>`;
+    // Build unique conference and pass options for filter dropdowns
+    const conferences = [...new Set(state.bookings.map(b => b.conference?.label).filter(Boolean))].sort();
+    const passes = [...new Set(state.bookings.map(b => b.ticket?.label).filter(Boolean))].sort();
 
-    qsa('.resend-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const ref = btn.dataset.ref;
-            const email = btn.dataset.email;
-            if (!confirm(`Resend pass email to ${email}?`)) return;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            try {
-                await apiJSON('POST', '/api/bookings', { bookingReference: ref });
-                toast(`Pass resent to ${email}`);
-            } catch (err) {
-                toast('Resend failed: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Resend';
+    $('bookings-content').innerHTML = `
+        <div class="bookings-toolbar">
+            <div class="bookings-search-wrap">
+                <i class="fas fa-search"></i>
+                <input class="bookings-search" id="b-search" type="search" placeholder="Search name, email, reference…" autocomplete="off">
+            </div>
+            <select class="bookings-filter" id="b-conf">
+                <option value="">All Conferences</option>
+                ${conferences.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+            </select>
+            <select class="bookings-filter" id="b-pass">
+                <option value="">All Passes</option>
+                ${passes.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('')}
+            </select>
+            <select class="bookings-filter" id="b-sort">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="name">Name A–Z</option>
+                <option value="amount">Amount ↓</option>
+            </select>
+            <span class="bookings-count" id="b-count"></span>
+        </div>
+        <div id="bookings-table-container"></div>`;
+
+    function applyFilters() {
+        const q = $('b-search').value.trim().toLowerCase();
+        const confFilter = $('b-conf').value;
+        const passFilter = $('b-pass').value;
+        const sort = $('b-sort').value;
+
+        let filtered = state.bookings.filter(b => {
+            if (confFilter && b.conference?.label !== confFilter) return false;
+            if (passFilter && b.ticket?.label !== passFilter) return false;
+            if (q) {
+                const hay = [
+                    b.bookingReference,
+                    b.attendee?.name,
+                    b.attendee?.email,
+                    b.conference?.label,
+                    b.ticket?.label
+                ].join(' ').toLowerCase();
+                if (!hay.includes(q)) return false;
             }
+            return true;
         });
-    });
+
+        if (sort === 'oldest') filtered.sort((a, b) => new Date(a.issuedAt) - new Date(b.issuedAt));
+        else if (sort === 'name') filtered.sort((a, b) => (a.attendee?.name || '').localeCompare(b.attendee?.name || ''));
+        else if (sort === 'amount') filtered.sort((a, b) => (b.ticket?.totalAmount || 0) - (a.ticket?.totalAmount || 0));
+        // default: newest already sorted from API
+
+        $('b-count').textContent = `${filtered.length} of ${state.bookings.length} booking${state.bookings.length !== 1 ? 's' : ''}`;
+
+        if (filtered.length === 0) {
+            $('bookings-table-container').innerHTML = `<div class="empty-state" style="padding:2rem 0"><i class="fas fa-filter"></i><h3>No results</h3><p>Try adjusting your search or filters.</p></div>`;
+            return;
+        }
+
+        $('bookings-table-container').innerHTML = `
+            <div class="bookings-table-wrap">
+            <table class="bookings-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Attendee</th>
+                        <th>Email</th>
+                        <th>Conference</th>
+                        <th>Pass</th>
+                        <th>Qty</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtered.map(b => `
+                    <tr>
+                        <td><code class="booking-ref">${esc(b.bookingReference)}</code></td>
+                        <td>${esc(b.attendee?.name || '—')}</td>
+                        <td class="email-cell">${esc(b.attendee?.email || '—')}</td>
+                        <td>${esc(b.conference?.label || '—')}</td>
+                        <td>${esc(b.ticket?.label || '—')}</td>
+                        <td>${esc(String(b.ticket?.quantity || 1))}</td>
+                        <td class="amount-cell">INR ${Math.round((b.ticket?.totalAmount || 0) / 100).toLocaleString('en-IN')}</td>
+                        <td class="date-cell">${esc(b.issuedAt ? new Date(b.issuedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) : '—')}</td>
+                        <td><button class="btn btn-secondary btn-sm resend-btn" data-ref="${esc(b.bookingReference)}" data-email="${esc(b.attendee?.email || '')}"><i class="fas fa-paper-plane"></i> Resend</button></td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+            </div>`;
+
+        qsa('.resend-btn', $('bookings-table-container')).forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const ref = btn.dataset.ref;
+                const email = btn.dataset.email;
+                if (!confirm(`Resend pass email to ${email}?`)) return;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    await apiJSON('POST', '/api/bookings', { bookingReference: ref });
+                    toast(`Pass resent to ${email}`);
+                } catch (err) {
+                    toast('Resend failed: ' + err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Resend';
+                }
+            });
+        });
+    }
+
+    $('b-search').addEventListener('input', applyFilters);
+    $('b-conf').addEventListener('change', applyFilters);
+    $('b-pass').addEventListener('change', applyFilters);
+    $('b-sort').addEventListener('change', applyFilters);
+
+    applyFilters();
 }
 
 // ── Speakers View ────────────────────────────────────────────────
